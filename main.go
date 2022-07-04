@@ -11,5 +11,7 @@ import (
 
 func main() {
 	dbConnection := db.Connect()
-	fmt.Println(dbConnection)
+	allTasks, _ := dbConnection.GetTaskByCompletion(false)
+
+	fmt.Println(allTasks)
 }
