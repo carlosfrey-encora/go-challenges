@@ -1,31 +1,23 @@
-
 package db
 
-
-
 import (
-	"os"
-	"log"
-	"fmt"
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
+
 	"github.com/go-sql-driver/mysql"
 )
 
-
-
-
 type CrudOperations struct {
 	db *sql.DB
-
 }
-
 
 type Task struct {
-	Id    		int
-	Name  		string
-	Completed	bool
+	Id        int
+	Name      string
+	Completed bool
 }
-
 
 func (c *CrudOperations) ListAll() ([]Task, error) {
 
@@ -36,7 +28,6 @@ func (c *CrudOperations) ListAll() ([]Task, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ListAll %v", err)
 	}
-
 
 	defer rows.Close()
 
@@ -63,10 +54,9 @@ func (c *CrudOperations) GetTaskById(Id int) (Task, error) {
 	var task Task
 	row := c.db.QueryRow("SELECT * FROM task WHERE id = ?", Id)
 
-
 	if err := row.Scan(&task.Id, &task.Name, &task.Completed); err != nil {
 
-		if err == sql.ErrNoRows{
+		if err == sql.ErrNoRows {
 			return task, fmt.Errorf("GetTaskById %d: no such album", Id)
 		}
 
@@ -77,27 +67,24 @@ func (c *CrudOperations) GetTaskById(Id int) (Task, error) {
 
 }
 
-
-func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]Task, error){
-	
+func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]Task, error) {
 
 	var tasks []Task
 	rows, err := c.db.Query("SELECT * FROM task WHERE Completed = ?", completed)
-
 
 	if err != nil {
 		fmt.Errorf("GetTaskByCompletion: %v", err)
 	}
 
 	defer rows.Close()
-	
-	for rows.Next() {	
+
+	for rows.Next() {
 		var task Task
 
 		if err := rows.Scan(&task.Id, &task.Name, &task.Completed); err != nil {
 			return nil, fmt.Errorf("GetTaskByCompletion: %v", err)
 		}
-		tasks = append(tasks, task)	
+		tasks = append(tasks, task)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -106,24 +93,24 @@ func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]Task, error){
 
 	return tasks, nil
 
-
-
 }
 
-func (c *CrudOperations) UpdateTask(task Task) (int64, error){
+func (c *CrudOperations) UpdateTask(taskId int64, task Task) (int64, error) {
 
-
-	result, err := c.db.Exec("UPDATE task SET name = ?, completed = ? WHERE id = ?", task.Name, task.Completed, task.Id)
-
+	result, err := c.db.Exec("UPDATE task SET name = ?, completed = ? WHERE id = ?", task.Name, task.Completed, taskId)
 
 	if err != nil {
 		return 0, fmt.Errorf("UpdateTask: %v", err)
 	}
 
-	id, err := result.LastInsertId()
+	id, err := result.RowsAffected()
+
+	if id == 0 {
+		return 0, fmt.Errorf("UpdateTask: task id wasn't found: %d", taskId)
+	}
 
 	if err != nil {
-		return 0, fmt.Errorf("Update task: %v", err)
+		return 0, fmt.Errorf("UpdateTask: %v", err)
 	}
 
 	return id, nil
@@ -132,14 +119,12 @@ func (c *CrudOperations) UpdateTask(task Task) (int64, error){
 func (c *CrudOperations) CreateTask(task Task) (int64, error) {
 	result, err := c.db.Exec("INSERT INTO task (name, completed) values (?, ?)", task.Name, task.Completed)
 
-
 	if err != nil {
 
 		return 0, fmt.Errorf("CreateTask: %v", err)
 	}
 
 	id, err := result.LastInsertId()
-
 
 	if err != nil {
 		return 0, fmt.Errorf("CreateTask: %v", err)
@@ -149,9 +134,7 @@ func (c *CrudOperations) CreateTask(task Task) (int64, error) {
 
 }
 
-
-func (c *CrudOperations) DeleteTask(taskId int)  (int64, error){
-
+func (c *CrudOperations) DeleteTask(taskId int) (int64, error) {
 
 	result, err := c.db.Exec("DELETE FROM task WHERE id = ? ", taskId)
 
@@ -159,7 +142,6 @@ func (c *CrudOperations) DeleteTask(taskId int)  (int64, error){
 		return 0, fmt.Errorf("DeleteTask: %v", err)
 	}
 
-
 	id, err := result.LastInsertId()
 
 	if err != nil {
@@ -168,21 +150,17 @@ func (c *CrudOperations) DeleteTask(taskId int)  (int64, error){
 
 	return id, nil
 
-
-
 }
 
-
-
-func Connection() (*sql.DB) {
+func Connection() *sql.DB {
 	var db *sql.DB
 
 	DatabaseConfig := mysql.Config{
-		User:     os.Getenv("DBUSER"),
-		Passwd:   os.Getenv("DBPASS"),
-		Net:      "tcp",
-		Addr:     "127.0.0.1:3306",
-		DBName:   "tasks",
+		User:   os.Getenv("DBUSER"),
+		Passwd: os.Getenv("DBPASS"),
+		Net:    "tcp",
+		Addr:   "127.0.0.1:3306",
+		DBName: "tasks",
 	}
 
 	var err error
@@ -202,7 +180,7 @@ func Connection() (*sql.DB) {
 	return db
 }
 
-func Connect() CrudOperations{
+func Connect() CrudOperations {
 	operations := CrudOperations{db: Connection()}
 	return operations
 }

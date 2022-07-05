@@ -3,15 +3,13 @@ package main
 
 
 import (
-	"fmt"
-	"crud/internal/db"
+	"crud/internal/api"
 )
 
 
 
 func main() {
-	dbConnection := db.Connect()
-	allTasks, _ := dbConnection.GetTaskByCompletion(false)
+	
 
-	fmt.Println(allTasks)
+	api.SetupApi()
 }
