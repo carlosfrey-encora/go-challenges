@@ -2,6 +2,7 @@ package api
 
 import (
 	"crud/internal/db"
+	gormdb "crud/internal/gorm-db"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,8 +10,17 @@ import (
 	"strings"
 )
 
+type CrudProvider interface {
+	ListAll() ([]db.Task, error)
+	GetTaskById(Id int) (db.Task, error)
+	GetTaskByCompletion(completed bool) ([]db.Task, error)
+	UpdateTask(taskId int64, task db.Task) (int64, error)
+	CreateTask(task db.Task) (int64, error)
+	DeleteTask(taskId int) (int64, error)
+}
+
 type ApiService struct {
-	dbService db.CrudOperations
+	dbService CrudProvider
 }
 
 func (a *ApiService) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -79,9 +89,23 @@ func (a *ApiService) PutTask(w http.ResponseWriter, r *http.Request, taskId int6
 	_, err := a.dbService.UpdateTask(taskId, task)
 
 	if err != nil {
-		fmt.Fprintf(w, "Task of id %d doesn't exist or task attributes are the same", taskId)
+		fmt.Fprint(w, err.Error())
 	} else {
 		fmt.Fprint(w, "Task sucessfully changed!")
+	}
+
+}
+
+func (a *ApiService) DeleteTask(w http.ResponseWriter, r *http.Request, taskId int) {
+
+	id, err := a.dbService.DeleteTask(taskId)
+
+	if err != nil {
+
+		json.NewEncoder(w).Encode(&err)
+	} else {
+
+		json.NewEncoder(w).Encode(id)
 	}
 
 }
@@ -117,7 +141,10 @@ func (a *ApiService) MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodDelete:
 
-		fmt.Fprint(w, "Made a Delete request")
+		if id, length := GetRequestId(r.URL.Path); length > 0 {
+
+			a.DeleteTask(w, r, id)
+		}
 	}
 
 }
@@ -131,8 +158,15 @@ func GetRequestId(url string) (int, int) {
 	return id, idLength
 }
 
-func SetupApi() {
-	apiService := ApiService{db.Connect()}
+func SetupApi(useVanilla bool) {
+	var apiService ApiService
+
+	if useVanilla {
+		apiService = ApiService{db.Connect()}
+	} else {
+
+		apiService = ApiService{gormdb.Connect()}
+	}
 
 	http.HandleFunc("/tasks/", apiService.MainHandler)
 	http.ListenAndServe(":8000", nil)

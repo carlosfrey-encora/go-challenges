@@ -19,6 +19,10 @@ type Task struct {
 	Completed bool
 }
 
+func (t Task) TableName() string {
+	return "task"
+}
+
 func (c *CrudOperations) ListAll() ([]Task, error) {
 
 	var tasks []Task
@@ -180,7 +184,7 @@ func Connection() *sql.DB {
 	return db
 }
 
-func Connect() CrudOperations {
+func Connect() *CrudOperations {
 	operations := CrudOperations{db: Connection()}
-	return operations
+	return &operations
 }
