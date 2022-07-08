@@ -1,7 +1,7 @@
 package gormdb
 
 import (
-	"crud/internal/db"
+	"crud/internal/grpc/pb"
 	"fmt"
 
 	"gorm.io/driver/mysql"
@@ -13,9 +13,9 @@ type OrmCrudOperations struct {
 	db *gorm.DB
 }
 
-func (c *OrmCrudOperations) ListAll() ([]db.Task, error) {
+func (c *OrmCrudOperations) ListAll() ([]*pb.Task, error) {
 
-	var tasks []db.Task
+	var tasks []*pb.Task
 
 	result := c.db.Find(&tasks)
 
@@ -28,21 +28,21 @@ func (c *OrmCrudOperations) ListAll() ([]db.Task, error) {
 
 }
 
-func (c *OrmCrudOperations) GetTaskById(Id int) (db.Task, error) {
-	var task db.Task
+func (c *OrmCrudOperations) GetTaskById(Id int) (*pb.Task, error) {
+	var task pb.Task
 
 	result := c.db.First(&task, Id)
 
 	if err := result.Error; err != nil {
-		return task, fmt.Errorf("GetTaskById: %v", err)
+		return nil, fmt.Errorf("GetTaskById: %v", err)
 	}
 
-	return task, nil
+	return &task, nil
 }
 
-func (c *OrmCrudOperations) GetTaskByCompletion(completed bool) ([]db.Task, error) {
+func (c *OrmCrudOperations) GetTaskByCompletion(completed bool) ([]*pb.Task, error) {
 
-	var task []db.Task
+	var task []*pb.Task
 	result := c.db.Where("completed = ?", completed).Find(&task)
 
 	if err := result.Error; err != nil {
@@ -50,15 +50,15 @@ func (c *OrmCrudOperations) GetTaskByCompletion(completed bool) ([]db.Task, erro
 		return task, fmt.Errorf("GetTaskByCompletion: %v", err)
 	}
 
-	return nil, fmt.Errorf("error")
+	return task, nil
 
 }
 
-func (c *OrmCrudOperations) UpdateTask(taskId int64, task db.Task) (int64, error) {
+func (c *OrmCrudOperations) UpdateTask(taskId int64, task pb.Task) (int64, error) {
 
-	var modifiedTask db.Task
+	var modifiedTask pb.Task
 
-	if err := c.db.Model(&modifiedTask).Clauses(clause.Returning{Columns: []clause.Column{{Name: "id"}}}).Where("id = ?", taskId).Updates(db.Task{Name: task.Name, Completed: task.Completed}).Error; err != nil {
+	if err := c.db.Model(&modifiedTask).Clauses(clause.Returning{Columns: []clause.Column{{Name: "id"}}}).Where("id = ?", taskId).Updates(pb.Task{Name: task.Name, Completed: task.Completed}).Error; err != nil {
 
 		return 0, fmt.Errorf("UpdateTask: %v", err)
 	}
@@ -66,10 +66,10 @@ func (c *OrmCrudOperations) UpdateTask(taskId int64, task db.Task) (int64, error
 	return int64(modifiedTask.Id), nil
 }
 
-func (c *OrmCrudOperations) CreateTask(task db.Task) (int64, error) {
+func (c *OrmCrudOperations) CreateTask(task pb.Task) (int64, error) {
 	result := c.db.Create(&task)
 
-	if err := result; err != nil {
+	if err := result.Error; err != nil {
 
 		return 0, fmt.Errorf("CreateTask: %v", err)
 	}
@@ -80,14 +80,14 @@ func (c *OrmCrudOperations) CreateTask(task db.Task) (int64, error) {
 
 func (c *OrmCrudOperations) DeleteTask(taskId int) (int64, error) {
 
-	err := c.db.Delete(&db.Task{}, taskId).Error
+	err := c.db.Delete(&pb.Task{}, taskId).Error
 
 	if err != nil {
 
 		return 0, fmt.Errorf("DeleteTask: %v", err)
 	}
 
-	return 0, fmt.Errorf("error")
+	return 0, nil
 
 }
 

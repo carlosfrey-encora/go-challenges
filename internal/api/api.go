@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -158,13 +159,13 @@ func GetRequestId(url string) (int, int) {
 	return id, idLength
 }
 
-func SetupApi(useVanilla bool) {
+func SetupApi() {
 	var apiService ApiService
+	implementation := os.Getenv("DB_IMPL")
 
-	if useVanilla {
+	if implementation == "vanilla" {
 		apiService = ApiService{db.Connect()}
-	} else {
-
+	} else if implementation == "orm" {
 		apiService = ApiService{gormdb.Connect()}
 	}
 
