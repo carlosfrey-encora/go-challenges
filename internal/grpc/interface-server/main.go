@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 
-	gormdb "crud/internal/gorm-db"
+	crud_via_gorm "crud/internal/crud-via-gorm"
 	"crud/internal/grpc/pb"
 
 	"google.golang.org/grpc"
@@ -19,7 +19,7 @@ var (
 
 type server struct {
 	pb.UnimplementedDatabaseServer
-	db *gormdb.OrmCrudOperations
+	db *crud_via_gorm.OrmCrudOperations
 }
 
 func (s *server) RetrieveTask(ctx context.Context, in *pb.TaskRequestById) (*pb.TaskResponseById, error) {
@@ -71,7 +71,7 @@ func (s *server) RetrieveAllTasks(ctx context.Context, in *pb.TaskRequestAll) (*
 
 func (s *server) PutTask(ctx context.Context, in *pb.PutTaskRequest) (*pb.PutTaskResponse, error) {
 
-	_, err := s.db.UpdateTask(int64(in.GetId()), *in.GetTask())
+	_, err := s.db.UpdateTask(int64(in.GetId()), in.GetTask())
 
 	if err != nil {
 
@@ -83,7 +83,7 @@ func (s *server) PutTask(ctx context.Context, in *pb.PutTaskRequest) (*pb.PutTas
 
 func (s *server) CreateTask(ctx context.Context, in *pb.CreateTaskRequest) (*pb.CreateTaskResponse, error) {
 
-	id, err := s.db.CreateTask(*in.GetTask())
+	id, err := s.db.CreateTask(in.GetTask())
 
 	if err != nil {
 
@@ -104,7 +104,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	pb.RegisterDatabaseServer(s, &server{db: gormdb.Connect()})
+	pb.RegisterDatabaseServer(s, &server{db: crud_via_gorm.Connect()})
 
 	log.Printf("server listening at %v", lis.Addr())
 
