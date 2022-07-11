@@ -1,8 +1,9 @@
 package api
 
 import (
-	"crud/internal/db"
-	gormdb "crud/internal/gorm-db"
+	crud_via_gorm "crud/internal/crud-via-gorm"
+	crud_via_vanilla "crud/internal/crud-via-vanilla"
+	"crud/internal/grpc/pb"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,11 +13,11 @@ import (
 )
 
 type CrudProvider interface {
-	ListAll() ([]db.Task, error)
-	GetTaskById(Id int) (db.Task, error)
-	GetTaskByCompletion(completed bool) ([]db.Task, error)
-	UpdateTask(taskId int64, task db.Task) (int64, error)
-	CreateTask(task db.Task) (int64, error)
+	ListAll() ([]*pb.Task, error)
+	GetTaskById(Id int) (*pb.Task, error)
+	GetTaskByCompletion(completed bool) ([]*pb.Task, error)
+	UpdateTask(taskId int64, task *pb.Task) (int64, error)
+	CreateTask(task *pb.Task) (int64, error)
 	DeleteTask(taskId int) (int64, error)
 }
 
@@ -67,10 +68,10 @@ func (a *ApiService) GetByCompletion(w http.ResponseWriter, r *http.Request, com
 }
 
 func (a *ApiService) PostTask(w http.ResponseWriter, r *http.Request) {
-	var task db.Task
+	var task pb.Task
 	json.NewDecoder(r.Body).Decode(&task)
 
-	id, err := a.dbService.CreateTask(task)
+	id, err := a.dbService.CreateTask(&task)
 
 	if err != nil {
 
@@ -83,11 +84,11 @@ func (a *ApiService) PostTask(w http.ResponseWriter, r *http.Request) {
 
 func (a *ApiService) PutTask(w http.ResponseWriter, r *http.Request, taskId int64) {
 
-	var task db.Task
+	var task pb.Task
 
 	json.NewDecoder(r.Body).Decode(&task)
 
-	_, err := a.dbService.UpdateTask(taskId, task)
+	_, err := a.dbService.UpdateTask(taskId, &task)
 
 	if err != nil {
 		fmt.Fprint(w, err.Error())
@@ -164,9 +165,9 @@ func SetupApi() {
 	implementation := os.Getenv("DB_IMPL")
 
 	if implementation == "vanilla" {
-		apiService = ApiService{db.Connect()}
+		apiService = ApiService{crud_via_vanilla.Connect()}
 	} else if implementation == "orm" {
-		apiService = ApiService{gormdb.Connect()}
+		apiService = ApiService{crud_via_gorm.Connect()}
 	}
 
 	http.HandleFunc("/tasks/", apiService.MainHandler)

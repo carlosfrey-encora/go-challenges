@@ -7,6 +7,6 @@ import (
 
 func main() {
 
-	os.Setenv("DB_IMPL", "orm")
+	os.Setenv("DB_IMPL", "vanilla")
 	api.SetupApi()
 }

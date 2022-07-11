@@ -1,4 +1,4 @@
-package gormdb
+package crud_via_gorm
 
 import (
 	"crud/internal/grpc/pb"
@@ -29,7 +29,7 @@ func (c *OrmCrudOperations) ListAll() ([]*pb.Task, error) {
 }
 
 func (c *OrmCrudOperations) GetTaskById(Id int) (*pb.Task, error) {
-	var task pb.Task
+	var task *pb.Task
 
 	result := c.db.First(&task, Id)
 
@@ -37,7 +37,7 @@ func (c *OrmCrudOperations) GetTaskById(Id int) (*pb.Task, error) {
 		return nil, fmt.Errorf("GetTaskById: %v", err)
 	}
 
-	return &task, nil
+	return task, nil
 }
 
 func (c *OrmCrudOperations) GetTaskByCompletion(completed bool) ([]*pb.Task, error) {
@@ -54,7 +54,7 @@ func (c *OrmCrudOperations) GetTaskByCompletion(completed bool) ([]*pb.Task, err
 
 }
 
-func (c *OrmCrudOperations) UpdateTask(taskId int64, task pb.Task) (int64, error) {
+func (c *OrmCrudOperations) UpdateTask(taskId int64, task *pb.Task) (int64, error) {
 
 	var modifiedTask pb.Task
 
@@ -66,7 +66,7 @@ func (c *OrmCrudOperations) UpdateTask(taskId int64, task pb.Task) (int64, error
 	return int64(modifiedTask.Id), nil
 }
 
-func (c *OrmCrudOperations) CreateTask(task pb.Task) (int64, error) {
+func (c *OrmCrudOperations) CreateTask(task *pb.Task) (int64, error) {
 	result := c.db.Create(&task)
 
 	if err := result.Error; err != nil {

@@ -1,10 +1,12 @@
-package db
+package crud_via_vanilla
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
+
+	pb "crud/internal/grpc/pb"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -13,19 +15,9 @@ type CrudOperations struct {
 	db *sql.DB
 }
 
-type Task struct {
-	Id        int
-	Name      string
-	Completed bool
-}
+func (c *CrudOperations) ListAll() ([]*pb.Task, error) {
 
-func (t Task) TableName() string {
-	return "task"
-}
-
-func (c *CrudOperations) ListAll() ([]Task, error) {
-
-	var tasks []Task
+	var tasks []*pb.Task
 
 	rows, err := c.db.Query("SELECT * FROM task")
 
@@ -37,13 +29,13 @@ func (c *CrudOperations) ListAll() ([]Task, error) {
 
 	for rows.Next() {
 
-		var tsk Task
+		var task pb.Task
 
-		if err := rows.Scan(&tsk.Id, &tsk.Name, &tsk.Completed); err != nil {
+		if err := rows.Scan(&task.Id, &task.Name, &task.Completed); err != nil {
 			return nil, fmt.Errorf("ListAll: %v", err)
 		}
 
-		tasks = append(tasks, tsk)
+		tasks = append(tasks, &task)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -53,27 +45,27 @@ func (c *CrudOperations) ListAll() ([]Task, error) {
 	return tasks, nil
 }
 
-func (c *CrudOperations) GetTaskById(Id int) (Task, error) {
+func (c *CrudOperations) GetTaskById(Id int) (*pb.Task, error) {
 
-	var task Task
+	var task pb.Task
 	row := c.db.QueryRow("SELECT * FROM task WHERE id = ?", Id)
 
 	if err := row.Scan(&task.Id, &task.Name, &task.Completed); err != nil {
 
 		if err == sql.ErrNoRows {
-			return task, fmt.Errorf("GetTaskById %d: no such album", Id)
+			return &task, fmt.Errorf("GetTaskById %d: no such album", Id)
 		}
 
-		return task, fmt.Errorf("GetTaskById %d: %v", Id, err)
+		return &task, fmt.Errorf("GetTaskById %d: %v", Id, err)
 	}
 
-	return task, nil
+	return &task, nil
 
 }
 
-func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]Task, error) {
+func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]*pb.Task, error) {
 
-	var tasks []Task
+	var tasks []*pb.Task
 	rows, err := c.db.Query("SELECT * FROM task WHERE Completed = ?", completed)
 
 	if err != nil {
@@ -83,12 +75,12 @@ func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]Task, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var task Task
+		var task pb.Task
 
 		if err := rows.Scan(&task.Id, &task.Name, &task.Completed); err != nil {
 			return nil, fmt.Errorf("GetTaskByCompletion: %v", err)
 		}
-		tasks = append(tasks, task)
+		tasks = append(tasks, &task)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -99,7 +91,7 @@ func (c *CrudOperations) GetTaskByCompletion(completed bool) ([]Task, error) {
 
 }
 
-func (c *CrudOperations) UpdateTask(taskId int64, task Task) (int64, error) {
+func (c *CrudOperations) UpdateTask(taskId int64, task *pb.Task) (int64, error) {
 
 	result, err := c.db.Exec("UPDATE task SET name = ?, completed = ? WHERE id = ?", task.Name, task.Completed, taskId)
 
@@ -120,7 +112,7 @@ func (c *CrudOperations) UpdateTask(taskId int64, task Task) (int64, error) {
 	return id, nil
 }
 
-func (c *CrudOperations) CreateTask(task Task) (int64, error) {
+func (c *CrudOperations) CreateTask(task *pb.Task) (int64, error) {
 	result, err := c.db.Exec("INSERT INTO task (name, completed) values (?, ?)", task.Name, task.Completed)
 
 	if err != nil {
