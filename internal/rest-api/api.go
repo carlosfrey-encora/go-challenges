@@ -170,7 +170,7 @@ func SetupApi() {
 
 	if implementation == "vanilla" {
 		apiService = ApiService{crud_via_vanilla.Connect()}
-	} else if implementation == "orm" {
+	} else if implementation == "gorm" {
 		apiService = ApiService{crud_via_gorm.Connect()}
 	}
 

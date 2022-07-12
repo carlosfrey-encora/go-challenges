@@ -7,6 +7,6 @@ import (
 
 func main() {
 
-	os.Setenv("DB_IMPL", "vanilla")
+	os.Setenv("DB_IMPL", "gorm")
 	api.SetupApi()
 }

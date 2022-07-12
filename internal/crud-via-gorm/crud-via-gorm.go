@@ -3,6 +3,7 @@ package crud_via_gorm
 import (
 	"crud/internal/grpc/pb"
 	"fmt"
+	"os"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -92,7 +93,8 @@ func (c *OrmCrudOperations) DeleteTask(taskId int) (int64, error) {
 }
 
 func Connection() *gorm.DB {
-	dsn := "root:senhafacil@tcp(127.0.0.1:3306)/tasks?charset=utf8mb4&parseTime=True&loc=Local"
+
+	dsn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/tasks?charset=utf8mb4&parseTime=True&loc=Local", os.Getenv("DBUSER"), os.Getenv("DBPASS"))
 	database, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	return database
