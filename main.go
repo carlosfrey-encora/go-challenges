@@ -4,11 +4,12 @@ package main
 
 import (
 	"fmt"
+	"crud/internal/db"
 )
 
 
 
 func main() {
-
-	fmt.Println("Database connection")
+	dbConnection := db.Connect()
+	fmt.Println(dbConnection)
 }
