@@ -1,14 +1,12 @@
 package main
 
-
-
 import (
-	"fmt"
+	"crud/internal/api"
+	"os"
 )
-
-
 
 func main() {
 
-	fmt.Println("Database connection")
+	os.Setenv("DB_IMPL", "orm")
+	api.SetupApi()
 }
