@@ -30,11 +30,11 @@ func (a *ApiService) GetAll(w http.ResponseWriter, r *http.Request) {
 	tasks, err := a.dbService.ListAll()
 
 	if err != nil {
-
-		fmt.Errorf("GetAll: %v", err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+	} else {
+		w.WriteHeader(http.StatusFound)
+		json.NewEncoder(w).Encode(tasks)
 	}
-
-	json.NewEncoder(w).Encode(tasks)
 
 }
 
@@ -43,15 +43,12 @@ func (a *ApiService) GetById(w http.ResponseWriter, r *http.Request, id int) {
 	task, err := a.dbService.GetTaskById(id)
 
 	if err != nil {
-
-		fmt.Errorf("GetbyId: %v", err)
-	}
-
-	if task.Id == 0 {
-		fmt.Fprint(w, "There's no task with this id")
+		http.Error(w, err.Error(), http.StatusNotFound)
 	} else {
+		w.WriteHeader(http.StatusFound)
 		json.NewEncoder(w).Encode(task)
 	}
+
 }
 
 func (a *ApiService) GetByCompletion(w http.ResponseWriter, r *http.Request, completed bool) {
@@ -59,11 +56,11 @@ func (a *ApiService) GetByCompletion(w http.ResponseWriter, r *http.Request, com
 	tasks, err := a.dbService.GetTaskByCompletion(completed)
 
 	if err != nil {
-
-		fmt.Errorf("GetByCompletion: %v", err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+	} else {
+		w.WriteHeader(http.StatusFound)
+		json.NewEncoder(w).Encode(tasks)
 	}
-
-	json.NewEncoder(w).Encode(tasks)
 
 }
 
@@ -74,11 +71,11 @@ func (a *ApiService) PostTask(w http.ResponseWriter, r *http.Request) {
 	id, err := a.dbService.CreateTask(&task)
 
 	if err != nil {
-
-		fmt.Errorf("PostTask: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(id)
 	}
-
-	json.NewEncoder(w).Encode(id)
 
 }
 
@@ -91,8 +88,9 @@ func (a *ApiService) PutTask(w http.ResponseWriter, r *http.Request, taskId int6
 	_, err := a.dbService.UpdateTask(taskId, &task)
 
 	if err != nil {
-		fmt.Fprint(w, err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
+		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "Task sucessfully changed!")
 	}
 
@@ -104,15 +102,21 @@ func (a *ApiService) DeleteTask(w http.ResponseWriter, r *http.Request, taskId i
 
 	if err != nil {
 
-		json.NewEncoder(w).Encode(&err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
-
+		w.WriteHeader(http.StatusAccepted)
 		json.NewEncoder(w).Encode(id)
 	}
 
 }
 
+func AllowAnyOrigin(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
 func (a *ApiService) MainHandler(w http.ResponseWriter, r *http.Request) {
+
+	AllowAnyOrigin(&w)
 
 	switch r.Method {
 
@@ -171,6 +175,6 @@ func SetupApi() {
 	}
 
 	http.HandleFunc("/tasks/", apiService.MainHandler)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":8000", http.DefaultServeMux)
 
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crud/internal/api"
+	api "crud/internal/rest-api"
 	"os"
 )
 
