@@ -3,12 +3,13 @@ package main
 
 
 import (
-	"fmt"
+	"crud/internal/api"
 )
 
 
 
 func main() {
+	
 
-	fmt.Println("Database connection")
+	api.SetupApi()
 }
