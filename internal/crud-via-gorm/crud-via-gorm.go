@@ -58,13 +58,13 @@ func (c *OrmCrudOperations) GetTaskByCompletion(completed bool) ([]*pb.Task, err
 func (c *OrmCrudOperations) UpdateTask(taskId int64, task *pb.Task) (int64, error) {
 
 	var modifiedTask pb.Task
-
-	if err := c.db.Model(&modifiedTask).Clauses(clause.Returning{Columns: []clause.Column{{Name: "id"}}}).Where("id = ?", taskId).Updates(pb.Task{Name: task.Name, Completed: task.Completed}).Error; err != nil {
+	response := c.db.Model(&modifiedTask).Clauses(clause.Returning{Columns: []clause.Column{{Name: "id"}}}).Where("id = ?", taskId).Updates(pb.Task{Name: task.Name, Completed: task.Completed})
+	if err := response.Error; err != nil {
 
 		return 0, fmt.Errorf("UpdateTask: %v", err)
 	}
 
-	return int64(modifiedTask.Id), nil
+	return response.RowsAffected, nil
 }
 
 func (c *OrmCrudOperations) CreateTask(task *pb.Task) (int64, error) {
@@ -81,14 +81,16 @@ func (c *OrmCrudOperations) CreateTask(task *pb.Task) (int64, error) {
 
 func (c *OrmCrudOperations) DeleteTask(taskId int) (int64, error) {
 
-	err := c.db.Delete(&pb.Task{}, taskId).Error
+	response := c.db.Delete(&pb.Task{}, taskId)
+
+	err, rowsAffected := response.Error, response.RowsAffected
 
 	if err != nil {
 
 		return 0, fmt.Errorf("DeleteTask: %v", err)
 	}
 
-	return 0, nil
+	return rowsAffected, nil
 
 }
 
