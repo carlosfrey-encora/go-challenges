@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+
+option go_package = "./;pb";
+
+package pb;
+
+
+service Database {
+    rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {}
+    rpc RetrieveTask(TaskRequestById) returns (TaskResponseById) {}
+    rpc RetrieveByCompletion(TaskRequestByCompletion) returns (TaskResponseByCompletion) {}
+    rpc RetrieveAllTasks(TaskRequestAll) returns (TaskResponseAll) {}
+    rpc PutTask(PutTaskRequest) returns (PutTaskResponse) {}
+    rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse) {}
+   
+}
+
+message Task {
+    int32  Id        = 1;
+    string Name      = 2;
+    bool   Completed = 3;
+}
+
+
+
+// RETRIEVE TASK SESSION
+
+message TaskRequestById {
+    int32 Id = 1;
+}
+
+
+message TaskResponseById {
+    Task task = 1;
+}
+
+// RETRIEVE TASK BY COMPLETION
+
+
+message TaskRequestByCompletion {
+    bool Completed = 1;
+}
+
+message TaskResponseByCompletion {
+    repeated Task tasks = 1;
+}
+
+// RETRIEVE ALL TASKS SESSION
+
+// rpc RetrieveAllTasks(TaskRequestAll) returns (TaskResponseAll) {}
+message TaskRequestAll {
+    
+}
+
+message TaskResponseAll {
+    repeated Task tasks = 1;
+}
+
+
+// PUT TASK SESSION
+
+// rpc PutTask(PutTaskRequest) returns (PutTaskResponse) {}
+
+
+message PutTaskRequest {
+    int32 Id = 1;
+    Task  task = 2;
+}
+
+message PutTaskResponse {
+
+}
+
+
+// DELETE TASK SESSION 
+// rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse) {}
+
+message DeleteTaskRequest {
+
+    int32 Id = 1;
+}
+
+
+message DeleteTaskResponse {
+
+}
+
+// CREATE TASK SESSION
+//  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {}
+
+message CreateTaskRequest {
+    Task task = 1;
+}
+
+message CreateTaskResponse {
+    int32 id = 1;
+}
+
+
+
